@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl *)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('inserted:', d['inserted']\\)\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(pkill -f \"uvicorn main:app\")",
+      "Bash(gh auth *)",
+      "Bash(git --version)"
+    ]
+  }
+}
