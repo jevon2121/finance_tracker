@@ -53,8 +53,6 @@ with engine.begin() as conn:
     conn.execute(
         text("UPDATE transactions SET category = 'Savings' WHERE category != 'Savings' AND UPPER(name) LIKE '%SAVER%'")
     )
-    # "Currency Exchange" was renamed to "Travel" — converting money to a
-    # foreign currency is spending money on a trip, not its own category.
     conn.execute(text("UPDATE transactions SET category = 'Travel' WHERE category = 'Currency Exchange'"))
 
 TRANSACTIONS_START_DATE = date(2026, 8, 1)

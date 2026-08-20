@@ -24,9 +24,6 @@ class Transaction(Base):
 
 
 class CategoryBudget(Base):
-    """A user-set yearly spending limit for a category (e.g. Travel, Shopping),
-    compared against actual spend in the current rolling year (Aug 1 - Jul 31)."""
-
     __tablename__ = "category_budgets"
 
     category = Column(String, primary_key=True)

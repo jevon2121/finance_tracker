@@ -20,21 +20,6 @@ manual review via the is_transfer toggle.
 Only re-flags transactions currently marked `is_transfer=False` — a manual
 un-flag survives unless a fresh statement introduces a new matching partner
 for that same transaction.
-
-Separately, two kinds of transaction are flagged directly, without needing a
-matching partner:
-
-- A payment addressed "to"/"from" the account holder by name (e.g. "To Jevon
-  Sunandar", "Bill Payment to Jevon Fabian Sunan - Saver") is money moving
-  between the user's own accounts even when no opposite leg shows up on
-  another imported statement (a Saver pot or Trading212 payment we never
-  import a statement for).
-- Any "Savings" category transaction (a Trading212/Saver top-up or
-  withdrawal) is cash moving into or out of the user's own savings pot, not
-  real spending or income — both legs are excluded from the inflow/outflow
-  chart the same way, while still counting toward the pot's contribution
-  total via the category filter in `_savings_up_to` (which deliberately
-  ignores `is_transfer`).
 """
 
 import re
@@ -45,10 +30,6 @@ from sqlalchemy.orm import Session
 DATE_TOLERANCE_DAYS = 3
 AMOUNT_TOLERANCE = 0.01
 
-# Matches "to Jevon" / "from Jevon" as a whole-word phrase, so a merchant
-# payment that merely mentions the name in a reference field (e.g.
-# "Bill Payment to Matthew Anderson - Rent - Jevon") isn't swept in — only a
-# payment actually addressed to/from him is.
 SELF_TRANSFER_NAME_PATTERN = re.compile(r"\b(?:TO|FROM)\s+JEVON\b", re.IGNORECASE)
 
 
@@ -58,7 +39,11 @@ def detect_transfers(db: Session) -> int:
     name_matched = 0
     unmatched = []
     for txn in candidates:
-        if SELF_TRANSFER_NAME_PATTERN.search(txn.name):
+        if SELF_TRANSFER_NAME_PATTERN.search(txn.name) or txn.category in ("Savings", "Credit Card Payment"):
+            txn.is_transfer = True
+            name_matched += 1
+        elif txn.direction == models.Direction.IN and txn.category not in ("Salary", "Travel"):
+            txn.category = "Savings"
             txn.is_transfer = True
             name_matched += 1
         else:

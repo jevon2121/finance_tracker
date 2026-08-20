@@ -9,7 +9,10 @@
       "Bash(git --version)",
       "Bash(/Users/jevonsunandar/Desktop/personalprojects/budget-tracker/.venv/bin/uvicorn main:app --reload --port 8000)",
       "Bash(chmod +x /Users/jevonsunandar/Desktop/personalprojects/budget-tracker/start.sh)",
-      "Bash(lsof -i :8000 -i :5173 -sTCP:LISTEN)"
+      "Bash(lsof -i :8000 -i :5173 -sTCP:LISTEN)",
+      "Bash(sqlite3 -header -column /Users/jevonsunandar/Desktop/personalprojects/budget-tracker/backend/budget.db \"SELECT id, name, direction, category, is_transfer FROM transactions WHERE id=73;\")",
+      "Bash(git fetch *)",
+      "Bash(gh repo *)"
     ]
   }
 }
