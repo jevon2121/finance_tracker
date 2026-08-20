@@ -6,7 +6,10 @@
       "Bash(python3 -m json.tool)",
       "Bash(pkill -f \"uvicorn main:app\")",
       "Bash(gh auth *)",
-      "Bash(git --version)"
+      "Bash(git --version)",
+      "Bash(/Users/jevonsunandar/Desktop/personalprojects/budget-tracker/.venv/bin/uvicorn main:app --reload --port 8000)",
+      "Bash(chmod +x /Users/jevonsunandar/Desktop/personalprojects/budget-tracker/start.sh)",
+      "Bash(lsof -i :8000 -i :5173 -sTCP:LISTEN)"
     ]
   }
 }

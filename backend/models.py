@@ -23,6 +23,16 @@ class Transaction(Base):
     is_transfer = Column(Boolean, nullable=False, default=False)
 
 
+class CategoryBudget(Base):
+    """A user-set yearly spending limit for a category (e.g. Travel, Shopping),
+    compared against actual spend in the current rolling year (Aug 1 - Jul 31)."""
+
+    __tablename__ = "category_budgets"
+
+    category = Column(String, primary_key=True)
+    amount = Column(Float, nullable=False)
+
+
 class NetWorthCategory(str, enum.Enum):
     CASH_SAVINGS = "cash_savings"
     STOCKS = "stocks"

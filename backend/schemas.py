@@ -100,3 +100,29 @@ class SavingsCohortSummary(BaseModel):
     starting_balance: float
     starting_balance_as_of: date_type | None
     months: list[SavingsMonthContribution]
+
+
+class CategoryBudgetIn(BaseModel):
+    amount: float
+
+
+class CategoryBudgetOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    category: str
+    amount: float
+
+
+class RollingYearCategory(BaseModel):
+    category: str
+    spent: float
+    budget: float | None = None
+
+
+class RollingYearSummary(BaseModel):
+    year_start: date_type
+    year_end: date_type
+    total_in: float
+    total_out: float
+    net: float
+    categories: list[RollingYearCategory]

@@ -53,6 +53,20 @@ with engine.begin() as conn:
     conn.execute(
         text("UPDATE transactions SET category = 'Savings' WHERE category != 'Savings' AND UPPER(name) LIKE '%SAVER%'")
     )
+    # "Currency Exchange" was renamed to "Travel" — converting money to a
+    # foreign currency is spending money on a trip, not its own category.
+    conn.execute(text("UPDATE transactions SET category = 'Travel' WHERE category = 'Currency Exchange'"))
+
+TRANSACTIONS_START_DATE = date(2026, 8, 1)
+
+ROLLING_YEAR_ANCHOR_MONTH = 8
+ROLLING_YEAR_ANCHOR_DAY = 1
+
+
+def _rolling_year_start(as_of: date) -> date:
+    year = as_of.year if (as_of.month, as_of.day) >= (ROLLING_YEAR_ANCHOR_MONTH, ROLLING_YEAR_ANCHOR_DAY) else as_of.year - 1
+    start = date(year, ROLLING_YEAR_ANCHOR_MONTH, ROLLING_YEAR_ANCHOR_DAY)
+    return max(start, TRANSACTIONS_START_DATE)
 
 app = FastAPI(title="Budget Tracker API")
 
@@ -135,7 +149,7 @@ def list_transactions(
     is_transfer: bool | None = None,
     db: Session = Depends(get_db),
 ):
-    query = db.query(models.Transaction)
+    query = db.query(models.Transaction).filter(models.Transaction.date >= TRANSACTIONS_START_DATE)
     if category:
         query = query.filter(models.Transaction.category == category)
     if direction:
@@ -172,7 +186,11 @@ def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
 
 @app.get("/summary/monthly", response_model=list[schemas.MonthlySummary])
 def monthly_summary(db: Session = Depends(get_db)):
-    rows = db.query(models.Transaction).filter(models.Transaction.is_transfer.is_(False)).all()
+    rows = (
+        db.query(models.Transaction)
+        .filter(models.Transaction.is_transfer.is_(False), models.Transaction.date >= TRANSACTIONS_START_DATE)
+        .all()
+    )
     buckets: dict[str, dict[str, float]] = defaultdict(lambda: {"in": 0.0, "out": 0.0})
     for row in rows:
         key = row.date.strftime("%Y-%m")
@@ -191,7 +209,11 @@ def monthly_summary(db: Session = Depends(get_db)):
 def _net_up_to(db: Session, as_of_date: date) -> float:
     rows = (
         db.query(models.Transaction)
-        .filter(models.Transaction.date <= as_of_date, models.Transaction.is_transfer.is_(False))
+        .filter(
+            models.Transaction.date >= TRANSACTIONS_START_DATE,
+            models.Transaction.date <= as_of_date,
+            models.Transaction.is_transfer.is_(False),
+        )
         .all()
     )
     return sum(r.amount if r.direction == models.Direction.IN else -r.amount for r in rows)
@@ -222,7 +244,11 @@ def _savings_up_to(db: Session, as_of_date: date) -> float:
     contribution here — the two are independent questions."""
     rows = (
         db.query(models.Transaction)
-        .filter(models.Transaction.category == "Savings", models.Transaction.date <= as_of_date)
+        .filter(
+            models.Transaction.category == "Savings",
+            models.Transaction.date >= TRANSACTIONS_START_DATE,
+            models.Transaction.date <= as_of_date,
+        )
         .all()
     )
     return sum(r.amount if r.direction == models.Direction.OUT else -r.amount for r in rows)
@@ -320,6 +346,7 @@ def category_breakdown(month: str, direction: models.Direction = models.Directio
         .filter(
             models.Transaction.is_transfer.is_(False),
             models.Transaction.direction == direction,
+            models.Transaction.date >= TRANSACTIONS_START_DATE,
         )
         .all()
     )
@@ -338,7 +365,11 @@ def category_breakdown(month: str, direction: models.Direction = models.Directio
 def savings_cohort(db: Session = Depends(get_db)):
     anchor = _latest_entry(db, models.NetWorthCategory.STOCKS)
 
-    rows = db.query(models.Transaction).filter(models.Transaction.category == "Savings").all()
+    rows = (
+        db.query(models.Transaction)
+        .filter(models.Transaction.category == "Savings", models.Transaction.date >= TRANSACTIONS_START_DATE)
+        .all()
+    )
     buckets: dict[str, float] = defaultdict(float)
     for row in rows:
         key = row.date.strftime("%Y-%m")

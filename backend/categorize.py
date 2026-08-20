@@ -14,7 +14,7 @@ CATEGORY_KEYWORDS: dict[str, list[str]] = {
     "Fitness": ["GYM", "PURE GYM", "FITNESS"],
     "Savings": ["TRADING 212", "TRADING212", "VANGUARD", "HARGREAVES", "SAVER"],
     "Credit Card Payment": ["AMERICAN EXP", "AMEX"],
-    "Currency Exchange": ["EXCHANGED TO"],
+    "Travel": ["EXCHANGED TO"],
     "Rent": ["RENT"],
     "Salary": ["PAYSLIP", "SALARY"],
     "Transfers": ["TO ", "TRANSFER FROM", "PAYMENT FROM", "SENT FROM REVOLUT", "RECEIVED FROM"],
