@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 backend/budget.db
 .DS_Store
+.claude/settings.local.json
