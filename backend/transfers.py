@@ -22,31 +22,25 @@ un-flag survives unless a fresh statement introduces a new matching partner
 for that same transaction.
 """
 
-import re
-
 import models
 from sqlalchemy.orm import Session
 
 DATE_TOLERANCE_DAYS = 3
 AMOUNT_TOLERANCE = 0.01
 
-SELF_TRANSFER_NAME_PATTERN = re.compile(r"\b(?:TO|FROM)\s+JEVON\b", re.IGNORECASE)
-
 
 def detect_transfers(db: Session) -> int:
     candidates = db.query(models.Transaction).filter(models.Transaction.is_transfer.is_(False)).all()
 
-    name_matched = 0
     unmatched = []
+    direct_matched = 0
     for txn in candidates:
-        if SELF_TRANSFER_NAME_PATTERN.search(txn.name) or txn.category in ("Savings", "Credit Card Payment"):
+        if txn.category in ("Credit Card Payment", "Payment"):
             txn.is_transfer = True
-            name_matched += 1
-        elif txn.direction == models.Direction.IN and txn.category not in ("Salary", "Travel"):
-            txn.category = "Savings"
-            txn.is_transfer = True
-            name_matched += 1
+            direct_matched += 1
         else:
+            if txn.direction == models.Direction.IN and txn.category not in ("Salary", "Travel", "Savings"):
+                txn.category = "Savings"
             unmatched.append(txn)
 
     outs = [t for t in unmatched if t.direction == models.Direction.OUT]
@@ -93,4 +87,4 @@ def detect_transfers(db: Session) -> int:
             matched_count += 1
 
     db.commit()
-    return matched_count + name_matched
+    return matched_count + direct_matched
